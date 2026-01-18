@@ -25,8 +25,8 @@ class SyncService {
   constructor() {
     // Use localhost:3001 for local development, relative URL for production
     this.baseUrl = import.meta.env.DEV 
-      ? 'http://localhost:3001/api/sync'
-      : '/api/sync';
+      ? 'http://localhost:3001/api'
+      : '/api';
     this.username = '';
   }
 

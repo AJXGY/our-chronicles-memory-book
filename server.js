@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 await fs.mkdir(DATA_DIR, { recursive: true });
 
 // API: Save user data
-app.post('/api/sync/save', async (req, res) => {
+app.post('/api/save', async (req, res) => {
   try {
     const { username, data } = req.body;
 
@@ -52,7 +52,7 @@ app.post('/api/sync/save', async (req, res) => {
 });
 
 // API: Load user data
-app.get('/api/sync/load', async (req, res) => {
+app.get('/api/load', async (req, res) => {
   try {
     const { username } = req.query;
 
