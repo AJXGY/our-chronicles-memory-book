@@ -52,7 +52,7 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onExp
           <p className="text-xs text-rose-500 mt-2 font-medium">2025.1.19～forever~</p>
           <div className="mt-2 inline-block">
             <span className="text-[10px] font-mono bg-gradient-to-r from-rose-500 to-pink-600 text-white px-2 py-0.5 rounded-full">
-              v2.0
+              v2.1
             </span>
           </div>
         </div>
