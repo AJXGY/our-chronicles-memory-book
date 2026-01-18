@@ -55,7 +55,7 @@ class SyncService {
         lastSyncTime: new Date().toISOString(),
       } as SyncData;
 
-      const response = await fetch(`${this.baseUrl}/save`, {
+      const response = await fetch(`${this.baseUrl}/sync/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +67,8 @@ class SyncService {
       });
 
       if (!response.ok) {
-        throw new Error(`同步失败: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `同步失败: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -92,13 +93,14 @@ class SyncService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/load?username=${encodeURIComponent(this.username)}`);
+      const response = await fetch(`${this.baseUrl}/sync/load?username=${encodeURIComponent(this.username)}`);
 
       if (!response.ok) {
         if (response.status === 404) {
           return { success: true, message: '云端暂无数据', data: undefined };
         }
-        throw new Error(`加载失败: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `加载失败: ${response.statusText}`);
       }
 
       const result = await response.json();
