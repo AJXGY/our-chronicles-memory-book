@@ -69,6 +69,14 @@ export interface SocialPost {
   description?: string;
 }
 
+export interface Photo {
+  id: string;
+  imageUrl: string;
+  category: 'ccd' | 'camera' | 'phone' | 'pocket3';
+  date: string;
+  note?: string;
+}
+
 export interface TodoItem {
   id: string;
   text: string;
@@ -84,5 +92,6 @@ export enum AppView {
   SNACK_WALL = 'SNACK_WALL',
   TODO_LIST = 'TODO_LIST',
   ANNIVERSARY = 'ANNIVERSARY',
-  SOCIAL_MEDIA = 'SOCIAL_MEDIA'
+  SOCIAL_MEDIA = 'SOCIAL_MEDIA',
+  PHOTO_GALLERY = 'PHOTO_GALLERY' // 美丽欧欧照片墙
 }

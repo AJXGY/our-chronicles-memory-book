@@ -11,7 +11,8 @@ import { TravelLog } from './components/TravelLog';
 import { AnniversaryPage } from './components/AnniversaryPage';
 import { SocialMediaPage } from './components/SocialMediaPage';
 import { TodoListPage } from './components/TodoListPage';
-import { AppView, Memory, Flower, TodoItem, Snack, CityVisit, SpecialDate, SocialPost } from './types';
+import { PhotoGallery } from './components/PhotoGallery';
+import { AppView, Memory, Flower, TodoItem, Snack, CityVisit, SpecialDate, SocialPost, Photo } from './types';
 import { INITIAL_MEMORIES, MOCK_STATS } from './constants';
 import { syncService } from './services/syncService';
 import type { SyncResult } from './services/syncService';
@@ -27,6 +28,7 @@ const KEYS = {
   CITIES: 'chronicles_cities_v1',
   DATES: 'chronicles_dates_v1',
   SOCIAL_POSTS: 'chronicles_social_posts_v1',
+  PHOTOS: 'chronicles_photos_v1',
   AUTH: 'chronicles_auth_v1',
   USERNAME: 'chronicles_username_v1',
 };
@@ -77,6 +79,7 @@ const App: React.FC = () => {
   const [cities, setCities] = useState<CityVisit[]>(INITIAL_CITIES);
   const [dates, setDates] = useState<SpecialDate[]>(INITIAL_DATES);
   const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
 
   // UI States
   const [isLoaded, setIsLoaded] = useState(false);
@@ -121,6 +124,7 @@ const App: React.FC = () => {
     load(KEYS.CITIES, setCities);
     load(KEYS.DATES, setDates);
     load(KEYS.SOCIAL_POSTS, setSocialPosts);
+    load(KEYS.PHOTOS, setPhotos);
     
     // Mark as loaded to enable auto-save
     setIsLoaded(true);
@@ -134,6 +138,7 @@ const App: React.FC = () => {
   useEffect(() => { if (isLoaded) localStorage.setItem(KEYS.CITIES, JSON.stringify(cities)); }, [cities, isLoaded]);
   useEffect(() => { if (isLoaded) localStorage.setItem(KEYS.DATES, JSON.stringify(dates)); }, [dates, isLoaded]);
   useEffect(() => { if (isLoaded) localStorage.setItem(KEYS.SOCIAL_POSTS, JSON.stringify(socialPosts)); }, [socialPosts, isLoaded]);
+  useEffect(() => { if (isLoaded) localStorage.setItem(KEYS.PHOTOS, JSON.stringify(photos)); }, [photos, isLoaded]);
 
   const buildSyncPayload = () => ({
     memories,
@@ -473,6 +478,9 @@ const App: React.FC = () => {
   const handleUpdateSocialPost = (post: SocialPost) => setSocialPosts(p => p.map(sp => sp.id === post.id ? post : sp));
   const handleDeleteSocialPost = (id: string) => setSocialPosts(p => p.filter(sp => sp.id !== id));
 
+  const handleAddPhoto = (photo: Photo) => setPhotos([photo, ...photos]);
+  const handleDeletePhoto = (id: string) => setPhotos(p => p.filter(ph => ph.id !== id));
+
   const printBook = () => window.print();
 
   // Show login screen if not authenticated
@@ -532,6 +540,8 @@ const App: React.FC = () => {
         return <AnniversaryPage dates={dates} onAddDate={handleAddDate} onUpdateDate={handleUpdateDate} onDeleteDate={handleDeleteDate} />;
       case AppView.SOCIAL_MEDIA:
         return <SocialMediaPage posts={socialPosts} onAddPost={handleAddSocialPost} onUpdatePost={handleUpdateSocialPost} onDeletePost={handleDeleteSocialPost} />;
+      case AppView.PHOTO_GALLERY:
+        return <PhotoGallery photos={photos} onAddPhoto={handleAddPhoto} onDeletePhoto={handleDeletePhoto} />;
       case AppView.DASHBOARD:
         return <Dashboard stats={MOCK_STATS} />;
       case AppView.CHAT:
