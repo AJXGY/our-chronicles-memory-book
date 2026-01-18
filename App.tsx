@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { Login } from './components/Login';
 import { MemoryCard } from './components/MemoryCard';
@@ -14,7 +14,7 @@ import { SocialMediaPage } from './components/SocialMediaPage';
 import { AppView, Memory, Flower, TodoItem, Snack, CityVisit, SpecialDate, SocialPost } from './types';
 import { INITIAL_MEMORIES, MOCK_STATS } from './constants';
 import { syncService } from './services/syncService';
-import { Gamepad2, Plus, Printer, X, Save, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { Gamepad2, Plus, Printer, X, Save, Cloud, CloudOff, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
 
 // Storage Keys
 const KEYS = {
@@ -55,6 +55,7 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState<string>('');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Data States
   const [memories, setMemories] = useState<Memory[]>(INITIAL_MEMORIES);
@@ -74,9 +75,10 @@ const App: React.FC = () => {
     date: new Date().toISOString().split('T')[0],
     description: '',
     location: '',
-    imageUrl: `https://picsum.photos/800/600?random=${Date.now()}`,
+    imageUrl: '',
     tags: []
   });
+
 
   useEffect(() => {
     if (import.meta.env.VITE_ZHIPU_API_KEY) {
@@ -215,6 +217,46 @@ const App: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Handle paste event for images in memory modal
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!showAddModal) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const base64 = event.target?.result as string;
+              setNewMemory(prev => ({ ...prev, imageUrl: base64 }));
+            };
+            reader.readAsDataURL(blob);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [showAddModal]);
+
+  // Handle file upload for memory images
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setNewMemory(prev => ({ ...prev, imageUrl: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Import Data Logic
@@ -377,7 +419,61 @@ const App: React.FC = () => {
                 <input type="date" className="w-full border rounded-lg p-2" value={newMemory.date} onChange={e => setNewMemory({...newMemory, date: e.target.value})} />
                 <input className="w-full border rounded-lg p-2" value={newMemory.location} onChange={e => setNewMemory({...newMemory, location: e.target.value})} placeholder="地点" />
               </div>
-              <input className="w-full border rounded-lg p-2" value={newMemory.imageUrl} onChange={e => setNewMemory({...newMemory, imageUrl: e.target.value})} placeholder="图片 URL" />
+              
+              {/* Image Upload Area */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  图片
+                </label>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4">
+                  {newMemory.imageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={newMemory.imageUrl}
+                        alt="Preview"
+                        className="max-h-48 mx-auto rounded-lg object-cover"
+                      />
+                      <button
+                        onClick={() => setNewMemory(prev => ({ ...prev, imageUrl: '' }))}
+                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 text-center">
+                      <ImageIcon className="w-10 h-10 mx-auto text-slate-400" />
+                      <p className="text-sm text-slate-600">
+                        <strong>方法1:</strong> 截图后按 <kbd className="px-2 py-1 bg-slate-100 rounded text-xs">Ctrl+V</kbd> / <kbd className="px-2 py-1 bg-slate-100 rounded text-xs">Cmd+V</kbd> 粘贴
+                      </p>
+                      <p className="text-sm text-slate-600">或</p>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 mx-auto"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <strong>方法2:</strong> 点击上传图片
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-slate-500">或</p>
+                      <input 
+                        className="w-full border rounded-lg p-2 text-sm" 
+                        value={newMemory.imageUrl || ''} 
+                        onChange={e => setNewMemory({...newMemory, imageUrl: e.target.value})} 
+                        placeholder="方法3: 粘贴图片链接" 
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <textarea className="w-full border rounded-lg p-2 h-24" value={newMemory.description} onChange={e => setNewMemory({...newMemory, description: e.target.value})} placeholder="描述..." />
               <button onClick={handleAddMemory} className="w-full bg-rose-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"><Save className="w-5 h-5" />保存</button>
             </div>
