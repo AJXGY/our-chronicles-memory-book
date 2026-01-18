@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Lock, User, AlertCircle } from 'lucide-react';
+import { Heart, Lock, User, Sparkles } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (username: string, password: string) => void;
@@ -9,81 +9,102 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onLogin, error }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showError, setShowError] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowError(false);
     onLogin(username, password);
   };
 
-  React.useEffect(() => {
-    if (error) {
-      setShowError(true);
-      const timer = setTimeout(() => setShowError(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-rose-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8 animate-fadeInUp">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full shadow-lg mb-4">
-            <Heart className="w-10 h-10 text-white fill-white" />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 flex items-center justify-center p-4">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating Hearts */}
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute animate-float"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${8 + Math.random() * 4}s`,
+            }}
+          >
+            <Heart
+              className="text-rose-300/20"
+              size={20 + Math.random() * 30}
+              fill="currentColor"
+            />
           </div>
-          <h1 className="text-4xl font-serif font-bold text-slate-900 mb-2">
-            我们的时光书
-          </h1>
-          <p className="text-slate-600 text-sm">
-            Our Chronicles - Living Memory Book
-          </p>
+        ))}
+        
+        {/* Gradient Orbs */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-rose-300/30 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-md">
+        {/* Blessing Message */}
+        <div className="text-center mb-8 animate-fadeIn">
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg border border-rose-200/50 mb-4">
+            <Sparkles className="w-5 h-5 text-rose-500 animate-pulse" />
+            <h2 className="text-xl font-serif font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+              2026 欧欧一切顺顺利利～～～
+            </h2>
+            <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" style={{ animationDelay: '0.5s' }} />
+          </div>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-          <h2 className="text-2xl font-serif font-bold text-slate-900 mb-6 text-center">
-            欢迎回来
-          </h2>
+        {/* Main Login Card */}
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 animate-fadeInUp">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-rose-500 to-pink-600 rounded-full mb-4 shadow-lg shadow-rose-300/50 animate-bounce">
+              <Heart className="w-10 h-10 text-white" fill="white" />
+            </div>
+            <h1 className="text-3xl font-serif font-bold text-slate-800 mb-2">
+              我们的时光书
+            </h1>
+            <p className="text-slate-500 text-sm">
+              记录每一个温暖的瞬间
+            </p>
+          </div>
 
+          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username Field */}
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
+            {/* Username Input */}
+            <div className="relative group">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 账号
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400" />
-                </div>
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                 <input
-                  id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 bg-white"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-rose-500 focus:ring-4 focus:ring-rose-100 outline-none transition-all bg-white/50"
                   placeholder="请输入账号"
                   required
                 />
               </div>
             </div>
 
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+            {/* Password Input */}
+            <div className="relative group">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 密码
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
-                </div>
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
                 <input
-                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-200 bg-white"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-rose-500 focus:ring-4 focus:ring-rose-100 outline-none transition-all bg-white/50"
                   placeholder="请输入密码"
                   required
                 />
@@ -91,38 +112,58 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error }) => {
             </div>
 
             {/* Error Message */}
-            {showError && error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm animate-shake">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{error}</span>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm animate-shake">
+                {error}
               </div>
             )}
 
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-rose-300/50 hover:shadow-xl hover:shadow-rose-400/50 transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              <Heart className="w-5 h-5" />
-              进入时光书
+              <Heart className="w-5 h-5" fill="white" />
+              进入我们的世界
             </button>
           </form>
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-xs text-slate-500">
-              记录每一个美好瞬间 ✨
+            <p className="text-xs text-slate-400">
+              用爱记录，用心珍藏 ❤️
             </p>
           </div>
         </div>
 
-        {/* Bottom Text */}
-        <div className="mt-6 text-center text-sm text-slate-600">
-          <p>用爱与 AI 创造 💝</p>
+        {/* Bottom Decoration */}
+        <div className="text-center mt-6 text-slate-400 text-xs animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+          Made with 💕 by CHLJ
         </div>
       </div>
 
+      {/* Custom Animations */}
       <style>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translateY(-20px) rotate(180deg);
+            opacity: 0.6;
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -136,16 +177,24 @@ export const Login: React.FC<LoginProps> = ({ onLogin, error }) => {
         
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
+        }
+        
+        .animate-float {
+          animation: float linear infinite;
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 1s ease-out;
         }
         
         .animate-fadeInUp {
-          animation: fadeInUp 0.6s ease-out forwards;
+          animation: fadeInUp 0.6s ease-out;
         }
         
         .animate-shake {
-          animation: shake 0.3s ease-in-out;
+          animation: shake 0.5s ease-in-out;
         }
       `}</style>
     </div>
