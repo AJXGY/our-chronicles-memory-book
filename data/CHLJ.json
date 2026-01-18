@@ -1,0 +1,131 @@
+{
+  "memories": [
+    {
+      "id": "1",
+      "title": "第一次咖啡约会",
+      "date": "2023-02-14",
+      "description": "我们在街角的咖啡馆相遇。那天虽然下着雨，你却点了一杯冰拿铁。",
+      "imageUrl": "https://picsum.photos/800/600?random=1",
+      "location": "上海, 静安区",
+      "tags": [
+        "第一次",
+        "咖啡",
+        "雨天"
+      ],
+      "mood": "cozy"
+    },
+    {
+      "id": "2",
+      "title": "攀登黄山",
+      "date": "2023-06-20",
+      "description": "爬到半山腰差点放弃，但云海出现的那一刻，一切都值了。",
+      "imageUrl": "https://picsum.photos/800/600?random=2",
+      "location": "安徽, 黄山",
+      "tags": [
+        "冒险",
+        "自然",
+        "徒步"
+      ],
+      "mood": "adventure"
+    },
+    {
+      "id": "3",
+      "title": "一周年纪念晚餐",
+      "date": "2024-02-14",
+      "description": "一年后，回到同一个城市，但这次是在外滩的餐厅，看着江景。",
+      "imageUrl": "https://picsum.photos/800/600?random=3",
+      "location": "上海, 外滩",
+      "tags": [
+        "庆祝",
+        "美食",
+        "爱"
+      ],
+      "mood": "romantic"
+    },
+    {
+      "id": "4",
+      "title": "海边公路自驾",
+      "date": "2023-08-15",
+      "description": "车窗摇下来，我们大声唱着周杰伦的歌，海风吹乱了头发。",
+      "imageUrl": "https://picsum.photos/800/600?random=4",
+      "location": "海南, 万宁",
+      "tags": [
+        "旅行",
+        "音乐",
+        "海滩"
+      ],
+      "mood": "happy"
+    },
+    {
+      "id": "5",
+      "title": "搬家日",
+      "date": "2023-11-01",
+      "description": "满地的纸箱，坐在地板上吃外卖披萨。这是我们小家的开始。",
+      "imageUrl": "https://picsum.photos/800/600?random=5",
+      "location": "我们的新家",
+      "tags": [
+        "家",
+        "里程碑",
+        "混乱"
+      ],
+      "mood": "cozy"
+    }
+  ],
+  "flowers": [],
+  "todos": [
+    {
+      "id": "1",
+      "text": "一起去看极光",
+      "completed": false
+    }
+  ],
+  "snacks": [],
+  "cities": [
+    {
+      "id": "1",
+      "city": "泰山",
+      "date": "2023-05-01",
+      "notes": "五岳独尊，看日出"
+    },
+    {
+      "id": "2",
+      "city": "济南",
+      "date": "2023-05-03",
+      "notes": "大明湖畔夏雨荷"
+    },
+    {
+      "id": "3",
+      "city": "无锡",
+      "date": "2023-10-01",
+      "notes": "太湖美，鼋头渚"
+    },
+    {
+      "id": "4",
+      "city": "苏州",
+      "date": "2023-10-03",
+      "notes": "园林之美，平江路"
+    }
+  ],
+  "dates": [
+    {
+      "id": "1",
+      "title": "我的生日",
+      "date": "2002-12-29",
+      "type": "birthday"
+    },
+    {
+      "id": "2",
+      "title": "她的生日",
+      "date": "2003-08-15",
+      "type": "birthday"
+    },
+    {
+      "id": "3",
+      "title": "在一起纪念日",
+      "date": "2023-02-14",
+      "type": "anniversary"
+    }
+  ],
+  "socialPosts": [],
+  "lastSyncTime": "2026-01-18T15:31:36.654Z"
+}

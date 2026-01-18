@@ -1,0 +1,7 @@
+{
+  "name": "Our Chronicles - Living Memory Book",
+  "description": "An interactive, AI-powered memory book that turns photos and data into a living narrative.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
