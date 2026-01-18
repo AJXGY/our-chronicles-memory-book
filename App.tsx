@@ -9,8 +9,8 @@ import { FlowerWall } from './components/FlowerWall';
 import { SnackWall } from './components/SnackWall';
 import { TravelLog } from './components/TravelLog';
 import { AnniversaryPage } from './components/AnniversaryPage';
-import { TodoListPage } from './components/TodoListPage';
 import { SocialMediaPage } from './components/SocialMediaPage';
+import { TodoListPage } from './components/TodoListPage';
 import { AppView, Memory, Flower, TodoItem, Snack, CityVisit, SpecialDate, SocialPost } from './types';
 import { INITIAL_MEMORIES, MOCK_STATS } from './constants';
 import { syncService } from './services/syncService';
@@ -82,6 +82,7 @@ const App: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [tempMemoryImages, setTempMemoryImages] = useState<string[]>([]);
   const [newMemory, setNewMemory] = useState<Partial<Memory>>({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -432,13 +433,19 @@ const App: React.FC = () => {
       date: newMemory.date || new Date().toISOString(),
       description: newMemory.description || '',
       location: newMemory.location || '未知地点',
-      imageUrl: newMemory.imageUrl || 'https://picsum.photos/800/600',
+      imageUrl: tempMemoryImages[0] || newMemory.imageUrl || 'https://picsum.photos/800/600',
+      images: tempMemoryImages.length > 0 ? tempMemoryImages : undefined,
       tags: ['新回忆'],
       mood: 'happy'
     };
     setMemories([memory, ...memories]);
     setShowAddModal(false);
-    setNewMemory({ title: '', date: new Date().toISOString().split('T')[0], description: '', location: '', imageUrl: `https://picsum.photos/800/600?random=${Date.now()}`, tags: [] });
+    setNewMemory({ title: '', date: new Date().toISOString().split('T')[0], description: '', location: '', imageUrl: '', tags: [] });
+    setTempMemoryImages([]);
+  };
+
+  const handleRemoveMemoryImage = (index: number) => {
+    setTempMemoryImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleAddFlower = (f: Flower) => setFlowers([f, ...flowers]);
@@ -507,7 +514,7 @@ const App: React.FC = () => {
              <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-rose-200 before:to-transparent print:before:hidden">
                 {memories.map((memory) => (
                   <div key={memory.id} className="relative z-10 print:mb-8 print:break-inside-avoid">
-                     <MemoryCard memory={memory} onUpdate={handleMemoryUpdate} onDelete={handleMemoryDelete} />
+                     <MemoryCard memory={memory} />
                   </div>
                 ))}
              </div>
