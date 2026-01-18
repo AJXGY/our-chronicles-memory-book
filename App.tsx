@@ -27,6 +27,7 @@ const KEYS = {
   DATES: 'chronicles_dates_v1',
   SOCIAL_POSTS: 'chronicles_social_posts_v1',
   AUTH: 'chronicles_auth_v1',
+  USERNAME: 'chronicles_username_v1',
 };
 
 // Login Credentials
@@ -92,8 +93,12 @@ const App: React.FC = () => {
     
     // Check authentication status
     const authStatus = localStorage.getItem(KEYS.AUTH);
-    if (authStatus === 'true') {
+    const savedUsername = localStorage.getItem(KEYS.USERNAME);
+    
+    if (authStatus === 'true' && savedUsername) {
       setIsAuthenticated(true);
+      // Restore username for sync service
+      syncService.setUsername(savedUsername);
     }
     
     // Load all data from LocalStorage
@@ -165,6 +170,7 @@ const App: React.FC = () => {
     if (username === CREDENTIALS.USERNAME && password === CREDENTIALS.PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem(KEYS.AUTH, 'true');
+      localStorage.setItem(KEYS.USERNAME, username);
       setLoginError('');
       
       // Set username for sync service
@@ -201,6 +207,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem(KEYS.AUTH);
+    localStorage.removeItem(KEYS.USERNAME);
   };
 
   // Pull from Cloud - Load latest data from cloud
