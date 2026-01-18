@@ -514,7 +514,7 @@ const App: React.FC = () => {
              <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-rose-200 before:to-transparent print:before:hidden">
                 {memories.map((memory) => (
                   <div key={memory.id} className="relative z-10 print:mb-8 print:break-inside-avoid">
-                     <MemoryCard memory={memory} />
+                     <MemoryCard memory={memory} onUpdate={handleMemoryUpdate} onDelete={handleMemoryDelete} />
                   </div>
                 ))}
              </div>
