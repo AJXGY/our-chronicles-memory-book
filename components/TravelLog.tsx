@@ -21,30 +21,41 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newImages: string[] = [];
+    const promises: Promise<string>[] = [];
+    
     for (let i = 0; i < files.length; i++) {
-      try {
-        const base64 = await handleImageUpload(files[i]);
-        // Compress image
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          const maxWidth = 800;
-          const scale = Math.min(maxWidth / img.width, 1);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          newImages.push(canvas.toDataURL('image/jpeg', 0.7));
-          if (newImages.length === files.length) {
-            setTempImages(prev => [...prev, ...newImages]);
-          }
-        };
-        img.src = base64;
-      } catch (error) {
-        console.error('图片上传失败:', error);
-      }
+      const promise = new Promise<string>(async (resolve, reject) => {
+        try {
+          const base64 = await handleImageUpload(files[i]);
+          // Compress image
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const maxWidth = 800;
+            const scale = Math.min(maxWidth / img.width, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          };
+          img.onerror = () => reject(new Error('图片加载失败'));
+          img.src = base64;
+        } catch (error) {
+          reject(error);
+        }
+      });
+      promises.push(promise);
     }
+
+    try {
+      const compressedImages = await Promise.all(promises);
+      setTempImages(prev => [...prev, ...compressedImages]);
+    } catch (error) {
+      console.error('图片上传失败:', error);
+      alert('部分图片上传失败，请重试');
+    }
+    
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
