@@ -474,6 +474,7 @@ const App: React.FC = () => {
       onManualSync={syncToCloud}
       onPullFromCloud={handlePullFromCloud}
       onPushToCloud={handlePushToCloud}
+      onLogout={handleLogout}
     >
       {renderContent()}
       {showQuiz && <QuizModal memories={memories} onClose={() => setShowQuiz(false)} />}

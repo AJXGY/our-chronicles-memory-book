@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { AppView } from '../types';
-import { Book, BarChart2, MessageCircle, MapPin, Menu, Sprout, Utensils, Gift, ListChecks, Download, Upload, Share2, Cloud, CloudOff, RefreshCw, CheckCircle2, AlertCircle, CloudDownload, CloudUpload } from 'lucide-react';
+import { Book, BarChart2, MessageCircle, MapPin, Menu, Sprout, Utensils, Gift, ListChecks, Download, Upload, Share2, Cloud, CloudOff, RefreshCw, CheckCircle2, AlertCircle, CloudDownload, CloudUpload, LogOut } from 'lucide-react';
 
 interface LayoutProps {
   currentView: AppView;
@@ -12,11 +12,12 @@ interface LayoutProps {
   onManualSync?: () => void;
   onPullFromCloud?: () => void;
   onPushToCloud?: () => void;
+  onLogout?: () => void;
   children: React.ReactNode;
 }
 
 
-export const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onExportData, onImportData, syncStatus = 'idle', lastSyncTime, onManualSync, onPullFromCloud, onPushToCloud, children }) => {
+export const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onExportData, onImportData, syncStatus = 'idle', lastSyncTime, onManualSync, onPullFromCloud, onPushToCloud, onLogout, children }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navItems = [
@@ -160,6 +161,19 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onExp
             </div>
           </div>
         </div>
+        
+        {/* Logout Button */}
+        {onLogout && (
+          <div className="p-4 border-t border-rose-100">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              退出登录
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Mobile Header */}
