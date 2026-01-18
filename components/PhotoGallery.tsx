@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Photo } from '../types';
-import { Camera, Upload, Trash2, X, ZoomIn } from 'lucide-react';
-import { handleImageUpload } from '../utils';
+import { Camera, Upload, Trash2, X, ZoomIn, Loader2 } from 'lucide-react';
+import { handleImageUpload, compressImageDataUrl } from '../utils';
 
 interface PhotoGalleryProps {
   photos: Photo[];
@@ -52,6 +52,7 @@ const colorClasses = {
 export const PhotoGallery: React.FC<PhotoGalleryProps> = ({ photos, onAddPhoto, onDeletePhoto }) => {
   const [activeCategory, setActiveCategory] = useState<Category>('ccd');
   const [viewingPhoto, setViewingPhoto] = useState<Photo | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredPhotos = photos.filter(p => p.category === activeCategory);
@@ -61,22 +62,35 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({ photos, onAddPhoto, 
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setIsUploading(true);
+    let successCount = 0;
+
     for (let i = 0; i < files.length; i++) {
       try {
         const base64 = await handleImageUpload(files[i]);
+        // Compress image to avoid large file sizes
+        const compressed = await compressImageDataUrl(base64, { maxWidth: 1200, quality: 0.8 });
         const photo: Photo = {
           id: Date.now().toString() + i,
-          imageUrl: base64,
+          imageUrl: compressed,
           category: activeCategory,
           date: new Date().toISOString(),
         };
         onAddPhoto(photo);
+        successCount++;
       } catch (error) {
         console.error('图片上传失败:', error);
-        alert('图片上传失败，请重试');
       }
     }
+
+    setIsUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    if (successCount > 0) {
+      alert(`✅ 成功上传 ${successCount} 张照片！`);
+    } else {
+      alert('❌ 上传失败，请重试');
+    }
   };
 
   return (
@@ -121,15 +135,26 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({ photos, onAddPhoto, 
           accept="image/*,.heic,.heif"
           onChange={handleFileSelect}
           multiple
+          disabled={isUploading}
         />
         <button
           onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all ${
             colorClasses[activeColor as keyof typeof colorClasses].active
-          } hover:shadow-lg`}
+          } hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          <Upload className="w-5 h-5" />
-          上传照片（支持多选）
+          {isUploading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              上传中...
+            </>
+          ) : (
+            <>
+              <Upload className="w-5 h-5" />
+              上传照片（支持多选）
+            </>
+          )}
         </button>
       </div>
 
