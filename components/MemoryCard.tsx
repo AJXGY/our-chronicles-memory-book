@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Memory } from '../types';
-import { MapPin, Tag, Sparkles, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Tag, Sparkles, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Edit2, Trash2 } from 'lucide-react';
 
 interface MemoryCardProps {
   memory: Memory;
+  onUpdate?: (memory: Memory) => void;
+  onDelete?: (id: string) => void;
 }
 
 const moodConfig = {
@@ -21,7 +23,7 @@ const tagColors = [
   'bg-orange-100 text-orange-700 border-orange-200',
 ];
 
-export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
+export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, onUpdate, onDelete }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showFullNarrative, setShowFullNarrative] = useState(false);
   
@@ -50,11 +52,34 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory }) => {
               </div>
             )}
           </div>
-          {mood && (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{mood.emoji}</span>
+          <div className="flex items-center gap-2">
+            {mood && <span className="text-2xl">{mood.emoji}</span>}
+            {/* Edit/Delete Buttons */}
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {onUpdate && (
+                <button
+                  onClick={() => onUpdate(memory)}
+                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="编辑"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => {
+                    if (confirm('确定要删除这条回忆吗？')) {
+                      onDelete(memory.id);
+                    }
+                  }}
+                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="删除"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
