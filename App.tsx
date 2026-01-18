@@ -58,6 +58,10 @@ const App: React.FC = () => {
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Conflict Detection States
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [cloudData, setCloudData] = useState<any>(null);
+  
   // Data States
   const [memories, setMemories] = useState<Memory[]>(INITIAL_MEMORIES);
   const [flowers, setFlowers] = useState<Flower[]>([]);
@@ -197,6 +201,68 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem(KEYS.AUTH);
+  };
+
+  // Pull from Cloud - Load latest data from cloud
+  const handlePullFromCloud = async () => {
+    if (!confirm('确定要从云端拉取最新数据吗？\n\n这将用云端数据覆盖本地数据。')) {
+      return;
+    }
+
+    setSyncStatus('syncing');
+    const cloudResult = await syncService.loadFromCloud();
+    
+    if (cloudResult.success && cloudResult.data) {
+      // Apply cloud data
+      setMemories(cloudResult.data.memories || []);
+      setFlowers(cloudResult.data.flowers || []);
+      setTodos(cloudResult.data.todos || []);
+      setSnacks(cloudResult.data.snacks || []);
+      setCities(cloudResult.data.cities || []);
+      setDates(cloudResult.data.dates || []);
+      setSocialPosts(cloudResult.data.socialPosts || []);
+      
+      setSyncStatus('success');
+      setLastSyncTime(new Date().toLocaleString('zh-CN'));
+      alert('✅ 已从云端拉取最新数据');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    } else {
+      setSyncStatus('error');
+      alert('❌ 拉取失败: ' + (cloudResult.message || '未知错误'));
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
+
+  // Push to Cloud - Upload local data to cloud
+  const handlePushToCloud = async () => {
+    if (!confirm('确定要推送本地数据到云端吗？\n\n这将用本地数据覆盖云端数据。')) {
+      return;
+    }
+
+    await syncToCloud();
+    alert('✅ 已推送本地数据到云端');
+  };
+
+  // Handle conflict resolution
+  const handleUseCloudData = () => {
+    if (cloudData) {
+      setMemories(cloudData.memories || []);
+      setFlowers(cloudData.flowers || []);
+      setTodos(cloudData.todos || []);
+      setSnacks(cloudData.snacks || []);
+      setCities(cloudData.cities || []);
+      setDates(cloudData.dates || []);
+      setSocialPosts(cloudData.socialPosts || []);
+      setLastSyncTime(new Date().toLocaleString('zh-CN'));
+    }
+    setShowConflictModal(false);
+    setCloudData(null);
+  };
+
+  const handleKeepLocalData = () => {
+    setShowConflictModal(false);
+    setCloudData(null);
+    // Keep local data, do nothing
   };
 
   // Export Data Logic
@@ -406,6 +472,8 @@ const App: React.FC = () => {
       syncStatus={syncStatus}
       lastSyncTime={lastSyncTime}
       onManualSync={syncToCloud}
+      onPullFromCloud={handlePullFromCloud}
+      onPushToCloud={handlePushToCloud}
     >
       {renderContent()}
       {showQuiz && <QuizModal memories={memories} onClose={() => setShowQuiz(false)} />}
