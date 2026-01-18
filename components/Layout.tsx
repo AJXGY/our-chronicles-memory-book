@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { AppView } from '../types';
-import { Book, BarChart2, MessageCircle, MapPin, Menu, Sprout, Utensils, Gift, ListChecks, Download, Upload, Share2, Cloud, CloudOff, RefreshCw, CheckCircle2, AlertCircle, CloudDownload, CloudUpload, LogOut } from 'lucide-react';
+import { Book, BarChart2, MessageCircle, MapPin, Menu, Sprout, Utensils, Gift, ListChecks, Download, Upload, Share2, Cloud, CloudOff, RefreshCw, CheckCircle2, AlertCircle, CloudDownload, CloudUpload, LogOut, Camera } from 'lucide-react';
 
 interface LayoutProps {
   currentView: AppView;
@@ -28,6 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ currentView, onViewChange, onExp
     { id: AppView.MAP, label: '旅行打卡', icon: MapPin },
     { id: AppView.ANNIVERSARY, label: '纪念日', icon: Gift },
     { id: AppView.SOCIAL_MEDIA, label: '社交平台', icon: Share2 },
+    { id: AppView.PHOTO_GALLERY, label: '美丽欧欧', icon: Camera },
     { id: AppView.DASHBOARD, label: '情感数据', icon: BarChart2 },
     { id: AppView.CHAT, label: '时空对话', icon: MessageCircle },
   ];
