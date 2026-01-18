@@ -45,7 +45,8 @@ export interface CityVisit {
   id: string;
   city: string;
   date: string;
-  imageUrl?: string;
+  imageUrl?: string; // Keep for backward compatibility
+  images?: string[]; // New: support multiple images
   notes: string;
 }
 

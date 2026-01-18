@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { CityVisit } from '../types';
 import { MapPin, Plus, Trash2, Camera, Edit2, X, Save, Upload, Download } from 'lucide-react';
-import { downloadImage, generateFilename } from '../utils';
+import { downloadImage, generateFilename, handleImageUpload } from '../utils';
 
 interface TravelLogProps {
   visits: CityVisit[];
@@ -13,30 +13,43 @@ interface TravelLogProps {
 export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpdateVisit, onDeleteVisit }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ city: '', date: '', notes: '', imageUrl: '' });
+  const [formData, setFormData] = useState({ city: '', date: '', notes: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [tempImages, setTempImages] = useState<string[]>([]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const maxWidth = 800;
-        const scale = Math.min(maxWidth / img.width, 1);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        setTempImage(canvas.toDataURL('image/jpeg', 0.7));
-      };
-      img.src = ev.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newImages: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const base64 = await handleImageUpload(files[i]);
+        // Compress image
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const maxWidth = 800;
+          const scale = Math.min(maxWidth / img.width, 1);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          newImages.push(canvas.toDataURL('image/jpeg', 0.7));
+          if (newImages.length === files.length) {
+            setTempImages(prev => [...prev, ...newImages]);
+          }
+        };
+        img.src = base64;
+      } catch (error) {
+        console.error('图片上传失败:', error);
+      }
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setTempImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleAdd = () => {
@@ -46,10 +59,11 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
       city: formData.city,
       date: formData.date,
       notes: formData.notes || '打卡成功！',
-      imageUrl: tempImage || undefined
+      images: tempImages.length > 0 ? tempImages : undefined,
+      imageUrl: tempImages[0] || undefined // Backward compatibility
     });
-    setFormData({ city: '', date: '', notes: '', imageUrl: '' });
-    setTempImage(null);
+    setFormData({ city: '', date: '', notes: '' });
+    setTempImages([]);
     setIsAdding(false);
   };
 
@@ -58,10 +72,11 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
     setFormData({
       city: visit.city,
       date: visit.date,
-      notes: visit.notes,
-      imageUrl: visit.imageUrl || ''
+      notes: visit.notes
     });
-    setTempImage(visit.imageUrl || null);
+    // Load existing images
+    const existingImages = visit.images || (visit.imageUrl ? [visit.imageUrl] : []);
+    setTempImages(existingImages);
   };
 
   const handleSaveEdit = () => {
@@ -74,24 +89,30 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
       city: formData.city,
       date: formData.date,
       notes: formData.notes,
-      imageUrl: tempImage || undefined
+      images: tempImages.length > 0 ? tempImages : undefined,
+      imageUrl: tempImages[0] || undefined // Backward compatibility
     });
     setEditingId(null);
-    setFormData({ city: '', date: '', notes: '', imageUrl: '' });
-    setTempImage(null);
+    setFormData({ city: '', date: '', notes: '' });
+    setTempImages([]);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setFormData({ city: '', date: '', notes: '', imageUrl: '' });
-    setTempImage(null);
+    setFormData({ city: '', date: '', notes: '' });
+    setTempImages([]);
   };
 
-  const handleDownload = (visit: CityVisit) => {
-    if (visit.imageUrl) {
-      const filename = generateFilename(`travel_${visit.city}`, visit.date);
-      downloadImage(visit.imageUrl, filename);
-    }
+  const handleDownloadAll = (visit: CityVisit) => {
+    const images = visit.images || (visit.imageUrl ? [visit.imageUrl] : []);
+    images.forEach((img, index) => {
+      const filename = generateFilename(`travel_${visit.city}_${index + 1}`, visit.date);
+      downloadImage(img, filename);
+    });
+  };
+
+  const getVisitImages = (visit: CityVisit): string[] => {
+    return visit.images || (visit.imageUrl ? [visit.imageUrl] : []);
   };
 
   return (
@@ -137,21 +158,48 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                   placeholder="备注..."
                   className="w-full mb-3 p-2 border rounded-lg text-sm h-16 resize-none"
                 />
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,.heif" onChange={handleFileSelect} />
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*,.heic,.heif" 
+                  onChange={handleFileSelect}
+                  multiple
+                />
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full mb-3 py-2 border border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 text-sm"
                 >
                   <Upload className="w-4 h-4" />
-                  {tempImage ? '已选择照片' : '上传照片（可选）'}
+                  {tempImages.length > 0 ? `已选择 ${tempImages.length} 张照片` : '上传照片（可多选）'}
                 </button>
-                {tempImage && <img src={tempImage} className="w-full h-32 object-cover rounded-lg mb-3" alt="Preview" />}
+                
+                {/* Image Preview Grid */}
+                {tempImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {tempImages.map((img, index) => (
+                      <div key={index} className="relative group">
+                        <img src={img} className="w-full h-20 object-cover rounded-lg" alt={`Preview ${index + 1}`} />
+                        <button
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 <button onClick={handleAdd} className="w-full bg-blue-500 text-white py-2 rounded-lg text-sm">确认打卡</button>
              </div>
           )}
         </div>
 
-        {visits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(visit => (
+        {visits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(visit => {
+          const visitImages = getVisitImages(visit);
+          
+          return (
           <div key={visit.id} className="relative pl-6 md:pl-0 group">
              {/* Dot */}
              <div className="absolute left-[-5px] top-1.5 w-3 h-3 bg-white border-2 border-blue-300 rounded-full md:left-[-6px] z-10 group-hover:border-blue-500 transition-colors"></div>
@@ -180,15 +228,39 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
                    className="w-full mb-3 p-2 border rounded-lg text-sm h-16 resize-none"
                  />
-                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,.heif" onChange={handleFileSelect} />
+                 <input 
+                   type="file" 
+                   ref={fileInputRef} 
+                   className="hidden" 
+                   accept="image/*,.heic,.heif" 
+                   onChange={handleFileSelect}
+                   multiple
+                 />
                  <button 
                    onClick={() => fileInputRef.current?.click()}
                    className="w-full mb-3 py-2 border border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 text-sm"
                  >
                    <Upload className="w-4 h-4" />
-                   {tempImage ? '更换照片' : '上传照片'}
+                   {tempImages.length > 0 ? `已选择 ${tempImages.length} 张照片` : '上传照片（可多选）'}
                  </button>
-                 {tempImage && <img src={tempImage} className="w-full h-32 object-cover rounded-lg mb-3" alt="Preview" />}
+                 
+                 {/* Image Preview Grid */}
+                 {tempImages.length > 0 && (
+                   <div className="grid grid-cols-3 gap-2 mb-3">
+                     {tempImages.map((img, index) => (
+                       <div key={index} className="relative group">
+                         <img src={img} className="w-full h-20 object-cover rounded-lg" alt={`Preview ${index + 1}`} />
+                         <button
+                           onClick={() => handleRemoveImage(index)}
+                           className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+                 
                  <button 
                    onClick={handleSaveEdit}
                    className="w-full bg-blue-500 text-white py-2 rounded-lg text-sm flex items-center justify-center gap-2"
@@ -215,11 +287,11 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                        >
                          <Edit2 className="w-4 h-4" />
                        </button>
-                       {visit.imageUrl && (
+                       {visitImages.length > 0 && (
                          <button 
-                           onClick={() => handleDownload(visit)}
+                           onClick={() => handleDownloadAll(visit)}
                            className="p-2 text-slate-400 hover:text-green-600 transition-colors"
-                           title="下载照片"
+                           title="下载所有照片"
                          >
                            <Download className="w-4 h-4" />
                          </button>
@@ -233,8 +305,25 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                        </button>
                     </div>
                   </div>
-                  {visit.imageUrl ? (
-                    <img src={visit.imageUrl} className="w-full h-48 object-cover rounded-lg mt-3" alt={visit.city} />
+                  
+                  {/* Image Gallery */}
+                  {visitImages.length > 0 ? (
+                    <div className={`grid gap-2 mt-3 ${
+                      visitImages.length === 1 ? 'grid-cols-1' :
+                      visitImages.length === 2 ? 'grid-cols-2' :
+                      'grid-cols-3'
+                    }`}>
+                      {visitImages.map((img, index) => (
+                        <img 
+                          key={index}
+                          src={img} 
+                          className={`w-full object-cover rounded-lg ${
+                            visitImages.length === 1 ? 'h-64' : 'h-32'
+                          }`}
+                          alt={`${visit.city} ${index + 1}`}
+                        />
+                      ))}
+                    </div>
                   ) : (
                     <div className="w-full h-32 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300 mt-3">
                       <Camera className="w-8 h-8" />
@@ -243,7 +332,7 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                </div>
              )}
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );
