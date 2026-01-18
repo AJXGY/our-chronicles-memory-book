@@ -101,7 +101,7 @@ export const SnackWall: React.FC<SnackWallProps> = ({ snacks, onAddSnack, onUpda
 
       <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 border-dashed flex flex-col items-center justify-center text-center hover:bg-orange-50 transition-colors cursor-pointer mb-8"
            onClick={() => fileInputRef.current?.click()}>
-         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
+         <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,.heif" onChange={handleFileSelect} />
          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 text-orange-400">
            <Upload className="w-6 h-6" />
          </div>

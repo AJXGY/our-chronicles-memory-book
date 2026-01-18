@@ -137,7 +137,7 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                   placeholder="备注..."
                   className="w-full mb-3 p-2 border rounded-lg text-sm h-16 resize-none"
                 />
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,.heif" onChange={handleFileSelect} />
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full mb-3 py-2 border border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 text-sm"
@@ -180,7 +180,7 @@ export const TravelLog: React.FC<TravelLogProps> = ({ visits, onAddVisit, onUpda
                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
                    className="w-full mb-3 p-2 border rounded-lg text-sm h-16 resize-none"
                  />
-                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
+                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,.heif" onChange={handleFileSelect} />
                  <button 
                    onClick={() => fileInputRef.current?.click()}
                    className="w-full mb-3 py-2 border border-dashed border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 text-sm"

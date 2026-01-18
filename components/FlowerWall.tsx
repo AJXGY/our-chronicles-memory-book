@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Flower } from '../types';
 import { Upload, Trash2, Sprout, MessageCircle, Edit2, Download, X, Save } from 'lucide-react';
-import { downloadImage, generateFilename } from '../utils';
+import { downloadImage, generateFilename, handleImageUpload } from '../utils';
 
 interface FlowerWallProps {
   flowers: Flower[];
@@ -24,12 +24,12 @@ export const FlowerWall: React.FC<FlowerWallProps> = ({
   const [editForm, setEditForm] = useState({ note: '', date: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    try {
+      const base64 = await handleImageUpload(file);
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -42,9 +42,11 @@ export const FlowerWall: React.FC<FlowerWallProps> = ({
         setTempImage(canvas.toDataURL('image/jpeg', 0.7));
         setShowUploadModal(true);
       };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+      img.src = base64;
+    } catch (error) {
+      console.error('图片上传失败:', error);
+      alert('图片上传失败，请重试');
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -98,7 +100,7 @@ export const FlowerWall: React.FC<FlowerWallProps> = ({
 
       <div className="bg-rose-50/50 p-8 rounded-2xl border border-rose-100 border-dashed flex flex-col items-center justify-center text-center hover:bg-rose-50 transition-colors cursor-pointer group max-w-md mx-auto"
            onClick={() => fileInputRef.current?.click()}>
-        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
+        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,.heif" onChange={handleFileSelect} />
         <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 group-hover:scale-110 transition-transform text-rose-500">
           <Upload className="w-7 h-7" />
         </div>

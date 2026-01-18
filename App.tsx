@@ -14,6 +14,7 @@ import { SocialMediaPage } from './components/SocialMediaPage';
 import { AppView, Memory, Flower, TodoItem, Snack, CityVisit, SpecialDate, SocialPost } from './types';
 import { INITIAL_MEMORIES, MOCK_STATS } from './constants';
 import { syncService } from './services/syncService';
+import { handleImageUpload } from './utils';
 import { Gamepad2, Plus, Printer, X, Save, Cloud, CloudOff, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
 
 // Storage Keys
@@ -246,16 +247,18 @@ const App: React.FC = () => {
     return () => document.removeEventListener('paste', handlePaste);
   }, [showAddModal]);
 
-  // Handle file upload for memory images
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  // Handle file upload for memory images (supports HEIC)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
+    if (file) {
+      try {
+        const base64 = await handleImageUpload(file);
         setNewMemory(prev => ({ ...prev, imageUrl: base64 }));
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('图片上传失败:', error);
+        alert('图片上传失败，请重试');
+      }
     }
   };
 
@@ -457,7 +460,7 @@ const App: React.FC = () => {
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.heic,.heif"
                         multiple
                         onChange={handleFileUpload}
                         className="hidden"
