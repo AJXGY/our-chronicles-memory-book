@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SocialPost } from '../types';
 import { Plus, X, ExternalLink, Instagram, Maximize2, Minimize2, Upload, Clipboard } from 'lucide-react';
+import { compressImageDataUrl } from '../utils';
 
 interface SocialMediaPageProps {
   posts: SocialPost[];
@@ -15,6 +16,7 @@ export const SocialMediaPage: React.FC<SocialMediaPageProps> = ({
   onUpdatePost,
   onDeletePost,
 }) => {
+  const screenshotCompress = { maxWidth: 1600, quality: 0.75 };
   const [showAddModal, setShowAddModal] = useState(false);
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +73,13 @@ export const SocialMediaPage: React.FC<SocialMediaPageProps> = ({
             const reader = new FileReader();
             reader.onload = (event) => {
               const base64 = event.target?.result as string;
-              setNewPost(prev => ({ ...prev, screenshot: base64 }));
+              compressImageDataUrl(base64, screenshotCompress)
+                .then((compressed) => {
+                  setNewPost(prev => ({ ...prev, screenshot: compressed }));
+                })
+                .catch(() => {
+                  setNewPost(prev => ({ ...prev, screenshot: base64 }));
+                });
             };
             reader.readAsDataURL(blob);
           }
@@ -90,7 +98,13 @@ export const SocialMediaPage: React.FC<SocialMediaPageProps> = ({
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
-        setNewPost(prev => ({ ...prev, screenshot: base64 }));
+        compressImageDataUrl(base64, screenshotCompress)
+          .then((compressed) => {
+            setNewPost(prev => ({ ...prev, screenshot: compressed }));
+          })
+          .catch(() => {
+            setNewPost(prev => ({ ...prev, screenshot: base64 }));
+          });
       };
       reader.readAsDataURL(file);
     }

@@ -17,13 +17,13 @@ const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
 
 // Ensure data directory exists
 await fs.mkdir(DATA_DIR, { recursive: true });
 
 // API: Save user data
-app.post('/api/save', async (req, res) => {
+const handleSave = async (req, res) => {
   try {
     const { username, data } = req.body;
 
@@ -49,10 +49,13 @@ app.post('/api/save', async (req, res) => {
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-});
+};
+
+app.post('/api/save', handleSave);
+app.post('/api/sync/save', handleSave);
 
 // API: Load user data
-app.get('/api/load', async (req, res) => {
+const handleLoad = async (req, res) => {
   try {
     const { username } = req.query;
 
@@ -91,7 +94,10 @@ app.get('/api/load', async (req, res) => {
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-});
+};
+
+app.get('/api/load', handleLoad);
+app.get('/api/sync/load', handleLoad);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

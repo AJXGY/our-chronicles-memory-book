@@ -42,6 +42,44 @@ export const handleImageUpload = async (file: File): Promise<string> => {
   });
 };
 
+export const compressImageDataUrl = async (
+  dataUrl: string,
+  options?: { maxWidth?: number; quality?: number }
+): Promise<string> => {
+  const maxWidth = options?.maxWidth ?? 1600;
+  const quality = options?.quality ?? 0.75;
+
+  return new Promise((resolve, reject) => {
+    if (!dataUrl.startsWith('data:image/')) {
+      resolve(dataUrl);
+      return;
+    }
+
+    if (dataUrl.startsWith('data:image/gif')) {
+      resolve(dataUrl);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      if (!img.width || !img.height) {
+        resolve(dataUrl);
+        return;
+      }
+
+      const scale = Math.min(maxWidth / img.width, 1);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+};
+
 /**
  * 生成下载文件名
  * @param prefix - 文件名前缀

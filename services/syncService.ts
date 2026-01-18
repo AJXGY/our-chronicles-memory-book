@@ -16,6 +16,7 @@ export interface SyncResult {
   success: boolean;
   message?: string;
   data?: SyncData;
+  aborted?: boolean;
 }
 
 class SyncService {
@@ -40,7 +41,7 @@ class SyncService {
   }
 
   // Save data to cloud
-  async saveToCloud(data: Partial<SyncData>): Promise<SyncResult> {
+  async saveToCloud(data: Partial<SyncData>, signal?: AbortSignal): Promise<SyncResult> {
     if (!this.isOnline()) {
       return { success: false, message: '离线状态,无法同步到云端' };
     }
@@ -60,6 +61,7 @@ class SyncService {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal,
         body: JSON.stringify({
           username: this.username,
           data: syncData,
@@ -74,6 +76,9 @@ class SyncService {
       const result = await response.json();
       return { success: true, message: '数据已同步到云端' };
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return { success: false, message: '同步已取消', aborted: true };
+      }
       console.error('Cloud sync error:', error);
       return { 
         success: false, 
@@ -83,7 +88,7 @@ class SyncService {
   }
 
   // Load data from cloud
-  async loadFromCloud(): Promise<SyncResult> {
+  async loadFromCloud(signal?: AbortSignal): Promise<SyncResult> {
     if (!this.isOnline()) {
       return { success: false, message: '离线状态,使用本地数据' };
     }
@@ -93,7 +98,9 @@ class SyncService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/sync/load?username=${encodeURIComponent(this.username)}`);
+      const response = await fetch(`${this.baseUrl}/sync/load?username=${encodeURIComponent(this.username)}`, {
+        signal,
+      });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -110,6 +117,9 @@ class SyncService {
         data: result.data 
       };
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return { success: false, message: '加载已取消', aborted: true };
+      }
       console.error('Cloud load error:', error);
       return { 
         success: false, 

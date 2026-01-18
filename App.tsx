@@ -14,7 +14,8 @@ import { SocialMediaPage } from './components/SocialMediaPage';
 import { AppView, Memory, Flower, TodoItem, Snack, CityVisit, SpecialDate, SocialPost } from './types';
 import { INITIAL_MEMORIES, MOCK_STATS } from './constants';
 import { syncService } from './services/syncService';
-import { handleImageUpload } from './utils';
+import type { SyncResult } from './services/syncService';
+import { compressImageDataUrl, handleImageUpload } from './utils';
 import { Gamepad2, Plus, Printer, X, Save, Cloud, CloudOff, RefreshCw, Upload, Image as ImageIcon } from 'lucide-react';
 
 // Storage Keys
@@ -35,6 +36,9 @@ const CREDENTIALS = {
   USERNAME: 'CHLJ',
   PASSWORD: '20250119',
 };
+
+const MAX_SYNC_SIZE_MB = 45;
+const MEMORY_IMAGE_COMPRESS = { maxWidth: 1600, quality: 0.75 };
 
 // Initial Data
 const INITIAL_CITIES: CityVisit[] = [
@@ -58,6 +62,8 @@ const App: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const syncAbortRef = useRef<AbortController | null>(null);
+  const syncRequestIdRef = useRef(0);
   
   // Conflict Detection States
   const [showConflictModal, setShowConflictModal] = useState(false);
@@ -128,19 +134,44 @@ const App: React.FC = () => {
   useEffect(() => { if (isLoaded) localStorage.setItem(KEYS.DATES, JSON.stringify(dates)); }, [dates, isLoaded]);
   useEffect(() => { if (isLoaded) localStorage.setItem(KEYS.SOCIAL_POSTS, JSON.stringify(socialPosts)); }, [socialPosts, isLoaded]);
 
+  const buildSyncPayload = () => ({
+    memories,
+    flowers,
+    todos,
+    snacks,
+    cities,
+    dates,
+    socialPosts,
+  });
+
+  const estimateSyncSizeMB = (data: ReturnType<typeof buildSyncPayload>) => {
+    const json = JSON.stringify(data);
+    return json.length / (1024 * 1024);
+  };
+
   // Cloud Sync Logic
-  const syncToCloud = async () => {
+  const syncToCloud = async (): Promise<SyncResult> => {
+    const payload = buildSyncPayload();
+    const sizeMB = estimateSyncSizeMB(payload);
+    if (sizeMB > MAX_SYNC_SIZE_MB) {
+      const message = `数据体积约 ${sizeMB.toFixed(1)}MB，超过云端同步限制，请减少照片数量或压缩后再同步。`;
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+      return { success: false, message };
+    }
+
+    syncAbortRef.current?.abort();
+    const controller = new AbortController();
+    syncAbortRef.current = controller;
+    const requestId = ++syncRequestIdRef.current;
+
     setSyncStatus('syncing');
-    const result = await syncService.saveToCloud({
-      memories,
-      flowers,
-      todos,
-      snacks,
-      cities,
-      dates,
-      socialPosts,
-    });
+    const result = await syncService.saveToCloud(payload, controller.signal);
     
+    if (requestId !== syncRequestIdRef.current || result.aborted) {
+      return result;
+    }
+
     if (result.success) {
       setSyncStatus('success');
       setLastSyncTime(new Date().toLocaleString('zh-CN'));
@@ -150,6 +181,8 @@ const App: React.FC = () => {
       console.error('Sync failed:', result.message);
       setTimeout(() => setSyncStatus('idle'), 3000);
     }
+
+    return result;
   };
 
   // Debounced sync - only sync 3 seconds after last change
@@ -158,7 +191,7 @@ const App: React.FC = () => {
     
     const syncTimer = setTimeout(() => {
       if (syncService.isOnline()) {
-        syncToCloud();
+        void syncToCloud();
       }
     }, 3000);
 
@@ -216,9 +249,25 @@ const App: React.FC = () => {
       return;
     }
 
+    syncAbortRef.current?.abort();
+    const controller = new AbortController();
+    syncAbortRef.current = controller;
+    const requestId = ++syncRequestIdRef.current;
+
     setSyncStatus('syncing');
-    const cloudResult = await syncService.loadFromCloud();
+    const cloudResult = await syncService.loadFromCloud(controller.signal);
     
+    if (requestId !== syncRequestIdRef.current || cloudResult.aborted) {
+      return;
+    }
+
+    if (cloudResult.success && !cloudResult.data) {
+      setSyncStatus('success');
+      alert('ℹ️ 云端暂无数据');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+      return;
+    }
+
     if (cloudResult.success && cloudResult.data) {
       // Apply cloud data
       setMemories(cloudResult.data.memories || []);
@@ -246,8 +295,15 @@ const App: React.FC = () => {
       return;
     }
 
-    await syncToCloud();
-    alert('✅ 已推送本地数据到云端');
+    const result = await syncToCloud();
+    if (result.aborted) {
+      return;
+    }
+    if (result.success) {
+      alert('✅ 已推送本地数据到云端');
+      return;
+    }
+    alert('❌ 推送失败: ' + (result.message || '未知错误'));
   };
 
   // Handle conflict resolution
@@ -308,7 +364,13 @@ const App: React.FC = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
               const base64 = event.target?.result as string;
-              setNewMemory(prev => ({ ...prev, imageUrl: base64 }));
+              compressImageDataUrl(base64, MEMORY_IMAGE_COMPRESS)
+                .then((compressed) => {
+                  setNewMemory(prev => ({ ...prev, imageUrl: compressed }));
+                })
+                .catch(() => {
+                  setNewMemory(prev => ({ ...prev, imageUrl: base64 }));
+                });
             };
             reader.readAsDataURL(blob);
           }
@@ -327,7 +389,8 @@ const App: React.FC = () => {
     if (file) {
       try {
         const base64 = await handleImageUpload(file);
-        setNewMemory(prev => ({ ...prev, imageUrl: base64 }));
+        const compressed = await compressImageDataUrl(base64, MEMORY_IMAGE_COMPRESS);
+        setNewMemory(prev => ({ ...prev, imageUrl: compressed }));
       } catch (error) {
         console.error('图片上传失败:', error);
         alert('图片上传失败，请重试');
