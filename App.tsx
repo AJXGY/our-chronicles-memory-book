@@ -101,14 +101,22 @@ const App: React.FC = () => {
       setHasApiKey(true);
     }
     
-    // Check authentication status
+    // Check authentication status - must have both AUTH and USERNAME
     const authStatus = localStorage.getItem(KEYS.AUTH);
     const savedUsername = localStorage.getItem(KEYS.USERNAME);
     
-    if (authStatus === 'true' && savedUsername) {
+    // Only auto-login if BOTH conditions are met
+    if (authStatus === 'true' && savedUsername && savedUsername.trim() !== '') {
       setIsAuthenticated(true);
       // Restore username for sync service
       syncService.setUsername(savedUsername);
+      console.log('Auto-login successful for user:', savedUsername);
+    } else {
+      // Clear any partial auth data
+      localStorage.removeItem(KEYS.AUTH);
+      localStorage.removeItem(KEYS.USERNAME);
+      setIsAuthenticated(false);
+      console.log('No valid session found, showing login');
     }
     
     // Load all data from LocalStorage
